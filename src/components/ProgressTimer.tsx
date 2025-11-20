@@ -1,86 +1,106 @@
-import React, {useRef, useState, useEffect} from 'react'
-import {Text, View, StyleSheet, Animated} from 'react-native'
+import React, { useRef, useEffect } from 'react';
+import { Text, View, StyleSheet, Animated } from 'react-native';
 
-const TIME_OUT = 10
-// setInterval custom hook by Dan Abramov
-function useInterval(callback, delay) {
-  const savedCallback = useRef<any>()
+function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef<() => void>(null);
 
-  // Remember the latest callback.
   useEffect(() => {
-    savedCallback.current = callback
-  }, [callback])
+    savedCallback.current = callback;
+  }, [callback]);
 
-  // Set up the interval.
   useEffect(() => {
     function tick() {
-      savedCallback.current()
+      savedCallback.current?.();
     }
     if (delay !== null) {
-      let id = setInterval(tick, delay)
-      return () => clearInterval(id)
+      const id = setInterval(tick, delay);
+      return () => clearInterval(id);
     }
-  }, [delay])
+  }, [delay]);
 }
 
-const ProgressTimer = ({setMoveCount, moveCount, score}) => {
-  let animation = useRef(new Animated.Value(0))
-  const [progress, setProgress] = useState(0)
+const TIME_OUT = 40; // seconds
 
+interface Props {
+  setMoveCount: React.Dispatch<React.SetStateAction<number>>;
+  moveCount: number;
+  score: number;
+}
+
+const ProgressTimer: React.FC<Props> = ({ setMoveCount, score }) => {
+  const animation = useRef(new Animated.Value(TIME_OUT)).current;
+  const [secondsLeft, setSecondsLeft] = React.useState(TIME_OUT);
+
+  // Countdown every second
   useInterval(() => {
-    // update progress until 100
-    if (progress < TIME_OUT + 1) {
-      setProgress(progress + 1)
-    }
-  }, 1000)
+    setSecondsLeft(prev => {
+      if (prev <= 1) {
+        // Time's up → add move penalty and reset
+        setMoveCount(m => m + 1);
+        return TIME_OUT;
+      }
+      return prev - 1;
+    });
+  }, 1000);
 
+  // Reset when score changes (new match made)
   useEffect(() => {
-    setProgress(0)
-  }, [score])
+    setSecondsLeft(TIME_OUT);
+  }, [score]);
 
+  // Animate the bar smoothly
   useEffect(() => {
-    Animated.timing(animation.current, {
-      toValue: progress,
-      duration: TIME_OUT,
+    Animated.timing(animation, {
+      toValue: secondsLeft,
+      duration: 300, // smooth transition
       useNativeDriver: false,
-    }).start()
-    if (progress === TIME_OUT) {
-      setMoveCount(moveCount + 1)
-      setProgress(0)
-    }
-  }, [progress])
+    }).start();
+  }, [secondsLeft]);
 
-  const width = animation.current.interpolate({
+  // Convert remaining seconds → progress (100% → 0%)
+  const width = animation.interpolate({
     inputRange: [0, TIME_OUT],
-    outputRange: ['0%', '100%'],
+    outputRange: ['0%', '100%'], // full when time is up, empty when full time
     extrapolate: 'clamp',
-  })
+  });
 
   return (
     <View style={styles.progressContainer}>
       <View style={styles.progressBar}>
-        <Animated.View style={[StyleSheet.absoluteFill, {backgroundColor: '#8BED4F', width}]} />
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: '#8BED4F', width },
+          ]}
+        />
       </View>
-      <Text>{`${10 - progress}`}</Text>
+      <Text style={styles.timerText}>{secondsLeft}</Text>
     </View>
-  )
-}
+  );
+};
 
-export default ProgressTimer
+export default ProgressTimer;
 
 const styles = StyleSheet.create({
   progressContainer: {
-    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
-    // backgroundColor: '#ecf0f1',
+    alignItems: 'center',
+    gap: 5,
   },
   progressBar: {
     height: 16,
-    width: 120,
+    width: 100,
     backgroundColor: 'white',
     borderColor: '#000',
     borderWidth: 2,
-    borderRadius: 5,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-})
+  timerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    minWidth: 40,
+    textAlign: 'center',
+  },
+});

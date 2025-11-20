@@ -1,38 +1,33 @@
-import React, {useState} from 'react'
-import {StyleSheet, ImageBackground, Dimensions, Pressable, View, Text, SafeAreaView} from 'react-native'
-// import SwappableGrid from '../components/SwappableGrid';
-import SwappableGrid from '../components/SwappableGrid'
-import Timer from '../components/ProgressTimer'
+import React, { useState } from 'react';
+import { StyleSheet, ImageBackground, Dimensions } from 'react-native';
+import SwappableGrid from '../components/SwappableGrid';
+import CHeader from '../components/common/CHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CloudsBackground } from '../assets/images';
 
-// import Images from '../lib/Images';
-
-let playButton = require('../assets/PlayButton.png')
-
-let justClouds = require('../assets/CloudsBackground.png')
 
 const GameScreen = () => {
-  const [moveCount, setMoveCount] = useState(0)
-  const [score, setScore] = useState(0)
+  const [moveCount, setMoveCount] = useState(0);
+  const [score, setScore] = useState(0);
   return (
-    <ImageBackground source={justClouds} style={styles.backGroundImage}>
+    <ImageBackground source={CloudsBackground} style={styles.backGroundImage}>
       <SafeAreaView style={styles.scoreBoard}>
-        <Timer setMoveCount={setMoveCount} moveCount={moveCount} score={score} />
-        <View style={styles.scoreElement}>
-          <Text>{score}</Text>
-        </View>
-        <View style={styles.scoreElement}>
-          <Text>{moveCount}</Text>
-        </View>
+        <CHeader
+          score={score}
+          moveCount={moveCount}
+          setMoveCount={setMoveCount}
+          containerStyle={styles.headerContainer}
+        />
+        <SwappableGrid setMoveCount={setMoveCount} setScore={setScore} />
       </SafeAreaView>
-      <SwappableGrid setMoveCount={setMoveCount} setScore={setScore} />
     </ImageBackground>
-  )
-}
+  );
+};
 
-let Window = Dimensions.get('window')
+let Window = Dimensions.get('window');
 
-let windowWidth = Window.width
-let windowHeight = Window.height
+let windowWidth = Window.width;
+let windowHeight = Window.height;
 
 let styles = StyleSheet.create({
   backGroundImage: {
@@ -40,25 +35,20 @@ let styles = StyleSheet.create({
     width: windowWidth,
     height: windowHeight,
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scoreBoard: {
-    position: 'absolute',
-    top: 0,
-    flex: 3,
     flexDirection: 'row',
     width: windowWidth,
-    height: windowHeight / 6,
+    height: windowHeight,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 15,
-    // backgroundColor: red,
   },
-  scoreElement: {
-    flex: 1,
-    alignItems: 'center',
-    // backgroundColor: 'blue',
+  headerContainer: {
+    position: 'absolute',
+    top: 40,
+    alignSelf: 'center',
   },
-})
+});
 
-export default GameScreen
+export default GameScreen;

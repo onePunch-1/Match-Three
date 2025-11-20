@@ -1,27 +1,41 @@
-import React from 'react'
-import {StyleSheet, Dimensions, Animated} from 'react-native'
+import React from 'react';
+import { StyleSheet, Dimensions, Animated } from 'react-native';
 
 interface tileProps {
-  location: Animated.ValueXY
-  scale: Animated.Value
-  key: number
-  img: number
+  location: Animated.ValueXY;
+  scale: Animated.Value;
+  key: number;
+  img: number;
 }
 
 const Tile = (props: tileProps) => {
-  return <Animated.Image source={props.img} style={[styles.tile, {transform: [{translateX: props.location.x}, {translateY: props.location.y}, {scale: props.scale}]}]} />
-}
+  return (
+    <Animated.Image
+      source={props.img}
+      style={[
+        styles.tile,
+        {
+          transform: [
+            { translateX: props.location.x },
+            { translateY: props.location.y },
+            { scale: props.scale },
+          ],
+        },
+      ]}
+    />
+  );
+};
 
-let Window = Dimensions.get('window')
-let windowSpan = Math.min(Window.width, Window.height)
-let TILE_WIDTH = windowSpan / 6
+let Window = Dimensions.get('window');
+let windowSpan = Math.min(Window.width, Window.height);
+let TILE_WIDTH = windowSpan / 6;
 
 let styles = StyleSheet.create({
   tile: {
-    width: TILE_WIDTH,
-    height: TILE_WIDTH,
+    width: TILE_WIDTH - 20,
+    height: TILE_WIDTH - 20,
     position: 'absolute',
   },
-})
+});
 
-export default Tile
+export default Tile;
