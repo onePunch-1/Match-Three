@@ -7,6 +7,7 @@ import RedJellyBean from './RedJellyBean.png';
 import YellowJellyBean from './YellowJellyBean.png';
 import PinkJellyBean from './PinkJellyBean.png';
 import EmptyMoves from './emptyMoves.png';
+import rocket from './rocket.png';
 
 export {
   CloudsBackground,
@@ -18,4 +19,5 @@ export {
   YellowJellyBean,
   PinkJellyBean,
   EmptyMoves,
+  rocket,
 };

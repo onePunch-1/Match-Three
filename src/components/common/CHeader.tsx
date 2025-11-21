@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import React from 'react';
-import Timer from '../ProgressTimer';
+// import Timer from '../ProgressTimer';
 
 interface CHeaderProps {
   score: number;
@@ -11,12 +11,12 @@ interface CHeaderProps {
 const CHeader = ({
   score,
   moveCount,
-  setMoveCount,
+  // setMoveCount,
   containerStyle,
 }: CHeaderProps) => {
   return (
     <View style={[styles.header, containerStyle]}>
-      <Timer setMoveCount={setMoveCount} moveCount={moveCount} score={score} />
+      {/* <Timer setMoveCount={setMoveCount} moveCount={moveCount} score={score} /> */}
       <View style={styles.scoreElement}>
         <Text>{score}</Text>
       </View>

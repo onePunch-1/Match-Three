@@ -182,5 +182,5 @@ export const condenseColumns = (tileData: TileDataType[][]) => {
 };
 
 export const sleep = (ms: number) => {
-  return new Promise((r: any) => setTimeout(r, ms));
+  return new Promise(r => setTimeout(r, ms));
 };

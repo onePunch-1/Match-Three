@@ -5,7 +5,6 @@ import CHeader from '../components/common/CHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CloudsBackground } from '../assets/images';
 
-
 const GameScreen = () => {
   const [moveCount, setMoveCount] = useState(0);
   const [score, setScore] = useState(0);

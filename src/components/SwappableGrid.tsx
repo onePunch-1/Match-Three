@@ -23,6 +23,7 @@ import Tile from './Tile';
 import { ROW, COLUMN } from '../lib/spec';
 import EmptyMovesModal from './modal/emptyMovesModal';
 import EmptyMoves from '../assets/images/lottie/no_more_moves.json';
+import { BlueJellyBean1, rocket } from '../assets/images';
 
 // react-native-swipe-gestures swipeDirections type
 export enum swipeDirections {
@@ -40,10 +41,11 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
   const [tileDataSource, setTileDataSource] = useState(initializeDataSource());
   const [showNoMoves, setShowNoMoves] = useState(false);
   const [blockScreen, setBlockScreen] = useState('');
+  const [isAnimating, setIsAnimating] = useState(false);
   const gridOrigin = useRef([0, 0]);
   let invalidSwap = false;
 
-  const config = { velocityThreshold: 0.3, directionalOffsetThreshold: 50 };
+  const config = { velocityThreshold: 0.1, directionalOffsetThreshold: 50 };
 
   useEffect(() => {
     (async function () {
@@ -118,6 +120,10 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     gestureName: string,
     gestureState: PanResponderGestureState,
   ) => {
+    if (!gestureName || gestureName === 'none' || isAnimating) {
+      // Ignore null or none gesture names
+      return;
+    }
     const { SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT } = swipeDirections;
 
     let initialGestureX = gestureState.x0;
@@ -149,8 +155,13 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
   };
 
   const swap = (i: number, j: number, dx: number, dy: number) => {
+    if (isAnimating) return; // block if animation in progress
+
+    setIsAnimating(true); // block further swipes
     const swapStarter = tileDataSource[i][j];
     const swapEnder = tileDataSource[i + dx][j + dy];
+    console.log('swapStarter :::::-----', swapStarter);
+    console.log('swapEnder :::::-----', swapEnder);
     tileDataSource[i][j] = swapEnder;
     tileDataSource[i + dx][j + dy] = swapStarter;
 
@@ -174,6 +185,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
         setMoveCount(moveCount => (moveCount += 1));
         processMatches(allMatches);
         setScore(score => score + flattenArrayToPairs(allMatches).length * 100);
+        setIsAnimating(false);
       } else {
         if (invalidSwap) {
           invalidSwap = false;
@@ -184,19 +196,259 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
         }
         invalidSwap = true;
         swap(i, j, dx, dy);
+        setIsAnimating(false);
       }
     });
   };
-  console.log(flattenArrayToPairs(tileDataSource));
+
+  // const processMatches = (matches: number[][][]) => {
+  //   setTileDataSource(state => {
+  //     let newTileDataSource = state.slice();
+  //     markAsMatch(matches, newTileDataSource);
+  //     condenseColumns(newTileDataSource);
+  //     recolorMatches(newTileDataSource);
+
+  //     return newTileDataSource;
+  //   });
+  // };
+
+  // const processMatches = (matches: number[][][]) => {
+  //   setTileDataSource(state => {
+  //     let newTileDataSource = [...state];
+
+  //     matches.forEach(match => {
+  //       if (match.length === 4) {
+  //         // For 4 matched tiles, replace with special tile at the center
+  //         // Find center tile: average of coordinates (rounded)
+  //         let centerI = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[0], 0) / 4,
+  //         );
+  //         let centerJ = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[1], 0) / 4,
+  //         );
+
+  //         // Mark all 4 tiles for removal first
+  //         match.forEach(([i, j]) => {
+  //           newTileDataSource[i][j].markedAsMatch = true;
+  //         });
+
+  //         // After condensing, we will place the special tile at center
+  //         // So store the special tile position to replace after condensing (handled below)
+  //       } else if (match.length >= 3) {
+  //         // For 3 or more tiles (other than 4), mark them as matched to remove
+  //         match.forEach(([i, j]) => {
+  //           newTileDataSource[i][j].markedAsMatch = true;
+  //         });
+  //       }
+  //     });
+
+  //     // Condense columns - this will animate matched tiles going off screen and shift tiles down
+  //     condenseColumns(newTileDataSource);
+
+  //     // After condense, replace all matched tiles that were marked (except the 4-match special case) with random beans
+  //     recolorMatches(newTileDataSource);
+
+  //     // For each 4-match, add the special tile at center position
+  //     matches.forEach(match => {
+  //       if (match.length === 4) {
+  //         let centerI = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[0], 0) / 4,
+  //         );
+  //         let centerJ = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[1], 0) / 4,
+  //         );
+  //         console.log('Adding special tile at:', centerI, centerJ);
+  //         // Replace the center tile with the special bean image and clear mark
+  //         if (
+  //           newTileDataSource[centerI] &&
+  //           newTileDataSource[centerI][centerJ]
+  //         ) {
+  //           newTileDataSource[centerI][centerJ].imgObj = BlueJellyBean1;
+  //           newTileDataSource[centerI][centerJ].markedAsMatch = false;
+  //         }
+  //       }
+  //     });
+
+  //     return newTileDataSource;
+  //   });
+  // };
+
+  // const processMatches = (matches: number[][][]) => {
+  //   setTileDataSource(state => {
+  //     const newData = [...state];
+  //     const specialTilePositions: { i: number; j: number }[] = [];
+
+  //     matches.forEach(match => {
+  //       if (match.length === 4) {
+  //         const centerI = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[0], 0) / 4,
+  //         );
+  //         const centerJ = Math.round(
+  //           match.reduce((sum, pos) => sum + pos[1], 0) / 4,
+  //         );
+
+  //         match.forEach(([i, j]) => {
+  //           newData[i][j].markedAsMatch = true;
+  //         });
+
+  //         specialTilePositions.push({ i: centerI, j: centerJ });
+  //       } else if (match.length >= 3) {
+  //         match.forEach(([i, j]) => {
+  //           newData[i][j].markedAsMatch = true;
+  //         });
+  //       }
+  //     });
+
+  //     condenseColumns(newData);
+  //     recolorMatches(newData);
+
+  //     // Assign special tile images after condensing and recoloring
+  //     specialTilePositions.forEach(({ i, j }) => {
+  //       if (newData[i] && newData[i][j]) {
+  //         newData[i][j].imgObj = BlueJellyBean1; // your special image object
+  //         newData[i][j].markedAsMatch = false;
+  //       }
+  //     });
+
+  //     return newData;
+  //   });
+  // };
+  // const processMatches = (matches: number[][][]) => {
+  //   setTileDataSource(prevState => {
+  //     const newData = [...prevState];
+
+  //     matches.forEach(match => {
+  //       // Handle 4-match (special tile)
+  //       if (match.length === 4) {
+  //         const centerI = Math.round(
+  //           match.reduce((s, pos) => s + pos[0], 0) / 4,
+  //         );
+  //         const centerJ = Math.round(
+  //           match.reduce((s, pos) => s + pos[1], 0) / 4,
+  //         );
+
+  //         // Mark only the 3 tiles for removal
+  //         match.forEach(([i, j]) => {
+  //           if (!(i === centerI && j === centerJ)) {
+  //             newData[i][j].markedAsMatch = true;
+  //           }
+  //         });
+
+  //         // Center tile becomes SPECIAL immediately, not removed
+  //         newData[centerI][centerJ].imgObj = BEAN_OBJS[6];
+  //         newData[centerI][centerJ].markedAsMatch = false;
+  //       }
+
+  //       // Normal match (3 or more)
+  //       else if (match.length >= 3) {
+  //         match.forEach(([i, j]) => {
+  //           newData[i][j].markedAsMatch = true;
+  //         });
+  //       }
+  //     });
+
+  //     // Collapse columns (drops tiles down)
+  //     condenseColumns(newData);
+
+  //     // RECOLOR + FALL animation for replaced tiles
+  //     newData.forEach((row, rowIndex) => {
+  //       row.forEach((tile, colIndex) => {
+  //         if (tile.markedAsMatch) {
+  //           // Assign random bean image
+  //           const rand = getRandomInt(7);
+  //           tile.imgObj = BEAN_OBJS[rand];
+  //           tile.markedAsMatch = false;
+
+  //           // Get current X
+  //           const currentX = (tile.location.x as any)._value;
+
+  //           // Reset Y above the grid
+  //           tile.location.setValue({
+  //             x: currentX,
+  //             y: -COLUMN * TILE_WIDTH, // above the screen
+  //           });
+
+  //           // Animate FALLING
+  //           Animated.timing(tile.location, {
+  //             toValue: {
+  //               x: currentX,
+  //               y: TILE_WIDTH * colIndex, // correct final Y position
+  //             },
+  //             duration: 400,
+  //             easing: Easing.bezier(0.85, 0, 0.15, 1),
+  //             useNativeDriver: true,
+  //           }).start();
+  //         }
+  //       });
+  //     });
+
+  //     return newData;
+  //   });
+  // };
 
   const processMatches = (matches: number[][][]) => {
     setTileDataSource(state => {
-      let newTileDataSource = state.slice();
-      markAsMatch(matches, newTileDataSource);
-      condenseColumns(newTileDataSource);
-      recolorMatches(newTileDataSource);
+      const newData = [...state];
 
-      return newTileDataSource;
+      const specialTileCenters: { i: number; j: number }[] = [];
+
+      // 1. Mark matched tiles & detect 5-match center
+      matches.forEach(match => {
+        if (match.length >= 5) {
+          // Compute center tile
+          const centerI = Math.round(
+            match.reduce((sum, pos) => sum + pos[0], 0) / 5,
+          );
+          const centerJ = Math.round(
+            match.reduce((sum, pos) => sum + pos[1], 0) / 5,
+          );
+
+          specialTileCenters.push({ i: centerI, j: centerJ });
+
+          // Mark ALL 4 tiles
+          match.forEach(([i, j]) => {
+            newData[i][j].markedAsMatch = true;
+          });
+
+          // Immediately UNMARK center tile — it will become special
+          newData[centerI][centerJ].markedAsMatch = false;
+          newData[centerI][centerJ].imgObj = rocket;
+
+          // 2. Mark matched tiles & detect 4-match center
+        } else if (match.length === 4) {
+          // Compute center tile
+          const centerI = Math.round(
+            match.reduce((sum, pos) => sum + pos[0], 0) / 4,
+          );
+          const centerJ = Math.round(
+            match.reduce((sum, pos) => sum + pos[1], 0) / 4,
+          );
+
+          specialTileCenters.push({ i: centerI, j: centerJ });
+
+          // Mark ALL 4 tiles
+          match.forEach(([i, j]) => {
+            newData[i][j].markedAsMatch = true;
+          });
+
+          // Immediately UNMARK center tile — it will become special
+          newData[centerI][centerJ].markedAsMatch = false;
+          newData[centerI][centerJ].imgObj = rocket;
+        } else if (match.length >= 3) {
+          // Normal matches (3, 5, L, T shapes, etc.)
+          match.forEach(([i, j]) => {
+            newData[i][j].markedAsMatch = true;
+          });
+        }
+      });
+
+      // 2. Condense (special tile stays fixed!)
+      condenseColumns(newData);
+
+      // 3. Only refill tiles that are still marked after condense → 3 new tiles for a 4-match
+      recolorMatches(newData);
+
+      return newData;
     });
   };
 
@@ -219,7 +471,10 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
         onLayout={onLayout}
         config={config}
         style={styles.gestureContainer}
-        onSwipe={(direction, state) => onSwipe(direction, state)}
+        onSwipeUp={state => onSwipe(swipeDirections.SWIPE_UP, state)}
+        onSwipeDown={state => onSwipe(swipeDirections.SWIPE_DOWN, state)}
+        onSwipeLeft={state => onSwipe(swipeDirections.SWIPE_LEFT, state)}
+        onSwipeRight={state => onSwipe(swipeDirections.SWIPE_RIGHT, state)}
       >
         {renderTiles(tileDataSource)}
       </GestureRecognizer>
