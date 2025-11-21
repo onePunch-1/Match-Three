@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'white',
     minWidth: 40,
     textAlign: 'center',
   },

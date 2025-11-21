@@ -34,6 +34,10 @@ let styles = StyleSheet.create({
   tile: {
     width: TILE_WIDTH - 20,
     height: TILE_WIDTH - 20,
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
     position: 'absolute',
   },
 });

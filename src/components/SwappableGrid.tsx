@@ -6,6 +6,7 @@ import {
   LayoutChangeEvent,
   Easing,
   PanResponderGestureState,
+  View,
 } from 'react-native';
 import GestureRecognizer from 'react-native-swipe-gestures';
 import {
@@ -23,6 +24,7 @@ import Tile from './Tile';
 import { ROW, COLUMN } from '../lib/spec';
 import EmptyMovesModal from './modal/emptyMovesModal';
 import EmptyMoves from '../assets/images/lottie/no_more_moves.json';
+import { CLinearGradient } from './common/CLinearGradient';
 
 // react-native-swipe-gestures swipeDirections type
 export enum swipeDirections {
@@ -60,7 +62,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
         if (!findMoves(tileDataSource)) {
           await sleep(1500);
           setShowNoMoves(true);
-          await sleep(1500);
+          await sleep(4000);
           setShowNoMoves(false);
           setBlockScreen('');
           setTileDataSource(initializeDataSource());
@@ -221,7 +223,32 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
         style={styles.gestureContainer}
         onSwipe={(direction, state) => onSwipe(direction, state)}
       >
-        {renderTiles(tileDataSource)}
+        {/* <View style={styles.gridContainer}> */}
+        <CLinearGradient
+          colors={['red', 'pink']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.outergridContainer}
+        >
+          <CLinearGradient
+            colors={['pink', 'cyan']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 2 }}
+            style={
+              styles.gridContainer
+              //   {
+              //   justifyContent: 'center',
+              //   alignItems: 'center',
+              //   borderRadius: 20,
+              //   width: TILE_WIDTH * ROW * 0.75,
+              //   height: TILE_WIDTH * COLUMN * 0.75,
+              // }
+            }
+          >
+            {renderTiles(tileDataSource)}
+          </CLinearGradient>
+        </CLinearGradient>
+        {/* </View> */}
       </GestureRecognizer>
       <EmptyMovesModal
         visible={showNoMoves}
@@ -266,7 +293,7 @@ export default React.memo(SwappableGrid);
 
 let Window = Dimensions.get('window');
 let windowSpan = Math.min(Window.width, Window.height);
-export const TILE_WIDTH = windowSpan / 9;
+export const TILE_WIDTH = windowSpan / 8.5;
 
 let styles = StyleSheet.create({
   gestureContainer: {
@@ -274,6 +301,28 @@ let styles = StyleSheet.create({
     width: TILE_WIDTH * ROW,
     height: TILE_WIDTH * COLUMN,
     position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outergridContainer: {
+    width: TILE_WIDTH * ROW + 20,
+    height: TILE_WIDTH * COLUMN + 20,
+    backgroundColor: 'purple',
+    borderWidth: 2,
+    borderColor: 'white',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 0px 30px rgba(255, 255, 255, 0.9)',
+  },
+  gridContainer: {
+    width: TILE_WIDTH * ROW,
+    height: TILE_WIDTH * COLUMN,
+    borderWidth: 2,
+    borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalStyle: {
     width: '80%',
