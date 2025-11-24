@@ -15,7 +15,6 @@ import {
   getRandomInt,
   getAllMatches,
   condenseColumns,
-  flattenArrayToPairs,
   findMoves,
   sleep,
 } from '../lib/GridApi';
@@ -91,19 +90,19 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     rocketPos: { i: number; j: number },
     direction: 'horizontal' | 'vertical',
   ) => {
-    console.log('direction', direction);
     setTileDataSource(old => {
       const newData = [...old];
       const { i, j } = rocketPos;
       let tilesToBlast: number[][] = [];
       if (direction === 'horizontal') {
-        console.log('called horizontal');
+        for (let row = 0; row < ROW; row++) {
+          tilesToBlast.push([row, j]);
+        }
+      } else if (direction === 'vertical') {
         for (let col = 0; col < COLUMN; col++) {
           tilesToBlast.push([i, col]);
         }
-      }
-      if (direction === 'vertical') {
-        console.log('called vertical');
+      } else {
         for (let row = 0; row < ROW; row++) {
           tilesToBlast.push([row, j]);
         }
@@ -118,7 +117,6 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     });
 
     const blasted = direction === 'horizontal' ? COLUMN : ROW;
-    console.log('blasted, ', blasted);
     setScore(score => score + blasted * 100);
   };
 
@@ -133,35 +131,55 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     let allMatches = getAllMatches(tileDataSource);
     let matched =
       allMatches.find(group => {
-        return group.some(
-          pair =>
-            (pair[0] === i && pair[1] === j) ||
-            (pair[0] === j && pair[1] === i),
-        );
+        return group.some(pair => pair[0] === i && pair[1] === j);
       }) || [];
 
     if (matched.length !== 0) {
       setMoveCount(moveCount => (moveCount += 1));
-      processMatches([matched]);
+      processMatches([matched], i, j);
       setScore(score => score + matched.length * 100);
     }
     const isRocket = tileDataSource[i][j].imgObj?.color === 999;
+    if (!isRocket) return;
 
+    const neighbors = [
+      [i - 1, j],
+      [i + 1, j],
+      [i, j - 1],
+      [i, j + 1],
+    ];
+    let adjacentRocket = null;
+    neighbors.forEach(([x, y]) => {
+      if (
+        x >= 0 &&
+        y >= 0 &&
+        x < ROW &&
+        y < COLUMN &&
+        tileDataSource[x][y].imgObj?.color === 999
+      ) {
+        adjacentRocket = { x, y };
+      }
+    });
+    if (adjacentRocket) {
+      const rocketPos = { i, j };
+      blastRocket(rocketPos, 'horizontal');
+      blastRocket(rocketPos, 'vertical');
+      setIsAnimating(false);
+      return;
+    }
     const rocketDirection = tileDataSource[i][j].direction as {
       dx: number;
       dy: number;
+      direction: 'horizontal' | 'vertical';
     };
     if (isRocket) {
       const rocketPos = { i, j };
-      // const direction = rocketDirection?.dx !== 0 ? 'horizontal' : 'vertical';
       const direction =
-        rocketDirection?.dx !== 0
-          ? 'vertical'
-          : rocketDirection?.dy !== 0
-          ? 'horizontal'
-          : 'vertical';
-
-      console.log('here', isRocket, rocketDirection, rocketPos);
+        rocketDirection?.dx !== undefined
+          ? rocketDirection?.dx !== 0
+            ? 'horizontal'
+            : 'vertical'
+          : rocketDirection.direction;
 
       blastRocket(rocketPos, direction);
       setIsAnimating(false);
@@ -170,12 +188,12 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
   };
 
   const renderTiles = (tileData: TileDataType[][]) => {
-    console.log('tileData ===', tileData);
     const tiles = tileData.map((row, i) =>
       row.map((e, j) => (
         <Pressable
           key={e.key}
           onPress={() => handleTilePress(i, j)}
+          // eslint-disable-next-line react-native/no-inline-styles
           style={{ position: 'absolute', left: 0, top: 0 }}
         >
           <Tile
@@ -266,9 +284,6 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     const swapStarter = tileDataSource[i][j];
     const swapEnder = tileDataSource[i + dx][j + dy];
 
-    const isRocketStarter = swapStarter.imgObj?.color === 999;
-    const isRocket = isRocketStarter;
-
     tileDataSource[i][j] = swapEnder;
     tileDataSource[i + dx][j + dy] = swapStarter;
 
@@ -286,17 +301,6 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     ]);
 
     animateSwap.start(() => {
-      if (isRocket) {
-        const rocketPos = isRocketStarter ? { i, j } : { i: i + dx, j: j + dy };
-
-        const direction =
-          dx !== 0 ? 'vertical' : dy !== 0 ? 'horizontal' : 'vertical';
-
-        blastRocket(rocketPos, direction);
-        setIsAnimating(false);
-        return;
-      }
-
       let allMatches = getAllMatches(tileDataSource);
       let matched =
         allMatches.find(group => {
@@ -311,7 +315,6 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
 
       if (matched.length !== 0) {
         setMoveCount(moveCount => (moveCount += 1));
-        // processMatches([matched], dx, dy);
         setScore(score => score + matched.length * 100);
         setIsAnimating(false);
       } else {
@@ -345,7 +348,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
           const centerJ = Math.round(
             match.reduce((sum, pos) => sum + pos[1], 0) / 5,
           );
-
+          const dir = getMatchDirection(match);
           specialTileCenters.push({ i: centerI, j: centerJ });
 
           // Mark ALL 4 tiles
@@ -355,8 +358,12 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
 
           // Immediately UNMARK center tile — it will become special
           newData[centerI][centerJ].markedAsMatch = false;
-          newData[centerI][centerJ].imgObj = dx !== 0 ? ROCKET_OBJ : ROCKET_OBJ;
-          newData[centerI][centerJ].direction = { dx, dy };
+          newData[centerI][centerJ].imgObj = ROCKET_OBJ;
+          newData[centerI][centerJ].direction = {
+            dx,
+            dy,
+            direction: dir.direction || 'horizontal',
+          };
 
           // 2. Mark matched tiles & detect 4-match center
         } else if (match.length === 4) {
@@ -382,7 +389,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
           newData[centerI][centerJ].direction = {
             dx,
             dy,
-            direction: dir.direction,
+            direction: dir.direction || 'horizontal',
           };
         } else if (match.length >= 3) {
           // Normal matches (3, 5, L, T shapes, etc.)
@@ -405,9 +412,10 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
   const recolorMatches = (tileData: TileDataType[][]) => {
     tileData.forEach(row => {
       row.forEach(e => {
-        if (e.markedAsMatch === true) {
+        if (e.markedAsMatch) {
           let randIndex = getRandomInt(7);
           let randomBeanObj = BEAN_OBJS[randIndex];
+          e.direction = {};
           e.markedAsMatch = false;
           e.imgObj = randomBeanObj;
         }

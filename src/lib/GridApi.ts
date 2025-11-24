@@ -133,13 +133,6 @@ export const checkColsForMatch = (tileData: TileDataType[][]) => {
   return matches;
 };
 
-export const getAllMatches = (tileData: TileDataType[][]) => {
-  let rowMatches = checkRowsForMatch(tileData);
-  let colMatches = checkColsForMatch(tileData);
-
-  return [...rowMatches, ...colMatches];
-};
-
 export const markAsMatch = (
   matches: number[][][],
   tileData: TileDataType[][],
@@ -163,7 +156,7 @@ export const condenseColumns = (tileData: TileDataType[][]) => {
     spotsToFill = 0;
 
     for (let j = numOfCols - 1; j >= 0; j--) {
-      if (tileData[i][j].markedAsMatch === true) {
+      if (tileData[i][j].markedAsMatch) {
         spotsToFill++;
 
         tileData[i][j].location.setValue({
@@ -183,4 +176,75 @@ export const condenseColumns = (tileData: TileDataType[][]) => {
 
 export const sleep = (ms: number) => {
   return new Promise(r => setTimeout(r, ms));
+};
+
+export const getConnectedMatch = (
+  tileData: TileDataType[][],
+  startI: number,
+  startJ: number,
+  visited: boolean[][],
+): number[][] => {
+  const targetObj = tileData[startI][startJ].imgObj;
+  if (!targetObj) return [];
+
+  const stack: [number, number][] = [[startI, startJ]]; // use stack instead of queue
+  const match: number[][] = [];
+
+  const ROWS = tileData.length;
+  const COLS = tileData[0].length;
+
+  const directions = [
+    [0, 1], // right
+    [1, 0], // down
+    [0, -1], // left
+    [-1, 0], // up
+  ];
+
+  while (stack.length) {
+    const [i, j] = stack.pop()!; // pop is O(1), faster than shift
+    if (visited[i][j]) continue;
+
+    visited[i][j] = true;
+    match.push([i, j]);
+
+    for (const [dx, dy] of directions) {
+      const ni = i + dx;
+      const nj = j + dy;
+      if (
+        ni >= 0 &&
+        ni < ROWS &&
+        nj >= 0 &&
+        nj < COLS &&
+        !visited[ni][nj] &&
+        tileData[ni][nj].imgObj?.image === targetObj.image
+      ) {
+        stack.push([ni, nj]);
+      }
+    }
+  }
+
+  return match;
+};
+
+export const getAllMatches = (tileData: TileDataType[][]) => {
+  const ROWS = tileData.length;
+  const COLS = tileData[0].length;
+  const visited: boolean[][] = Array.from({ length: ROWS }, () =>
+    Array(COLS).fill(false),
+  );
+
+  const allMatches: number[][][] = [];
+
+  for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLS; j++) {
+      if (!visited[i][j] && tileData[i][j].imgObj) {
+        const match = getConnectedMatch(tileData, i, j, visited);
+        if (match.length >= 3) {
+          allMatches.push(match);
+        }
+      }
+    }
+  }
+
+  return allMatches;
 };

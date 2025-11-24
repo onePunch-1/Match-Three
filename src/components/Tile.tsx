@@ -50,4 +50,4 @@ let styles = StyleSheet.create({
   },
 });
 
-export default Tile;
+export default React.memo(Tile);
