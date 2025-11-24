@@ -6,6 +6,7 @@ interface tileProps {
   scale: Animated.Value;
   key: number;
   img: number;
+  rotate?: { dx: number; dy: number; direction: string };
 }
 
 const Tile = (props: tileProps) => {
@@ -19,6 +20,17 @@ const Tile = (props: tileProps) => {
             { translateX: props.location.x },
             { translateY: props.location.y },
             { scale: props.scale },
+          ],
+        },
+        props.rotate?.direction !== undefined && {
+          transform: [
+            { translateX: props.location.x },
+            { translateY: props.location.y },
+            { scale: props.scale },
+            {
+              rotate:
+                props.rotate?.direction === 'horizontal' ? '90deg' : '0deg',
+            },
           ],
         },
       ]}

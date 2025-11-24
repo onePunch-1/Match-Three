@@ -5,6 +5,7 @@ import {
   PinkJellyBean,
   PurpleJellyBean,
   RedJellyBean,
+  rocket,
   YellowJellyBean,
 } from '../assets/images';
 
@@ -16,6 +17,7 @@ export const ORANGE_BEAN = OrangeJellyBean;
 export const GREEN_BEAN = GreenJellyBean;
 export const YELLOW_BEAN = YellowJellyBean;
 export const RED_BEAN = RedJellyBean;
+export const ROCKET_IMG = rocket;
 
 // Colors
 const COLORS = {
@@ -62,6 +64,10 @@ export const ORANGE_BEAN_OBJ: ImageObjType = {
   image: ORANGE_BEAN,
   color: COLORS.ORANGE,
 };
+export const ROCKET_OBJ: ImageObjType = {
+  image: ROCKET_IMG,
+  color: 999,
+};
 
 export const BEAN_OBJS = [
   PINK_BEAN_OBJ,
@@ -76,4 +82,5 @@ export const BEAN_OBJS = [
 export interface ImageObjType {
   image: any;
   color: number;
+  rotation?: number;
 }
