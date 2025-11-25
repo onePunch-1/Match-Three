@@ -175,12 +175,11 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     if (isRocket) {
       const rocketPos = { i, j };
       const direction =
-        rocketDirection?.dx !== undefined
+        rocketDirection?.direction === undefined
           ? rocketDirection?.dx !== 0
             ? 'horizontal'
             : 'vertical'
           : rocketDirection.direction;
-
       blastRocket(rocketPos, direction);
       setIsAnimating(false);
       return;
@@ -331,7 +330,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
     });
   };
 
-  const processMatches = (matches: number[][][], dx?: number, dy?: number) => {
+  const processMatches = (matches: number[][][], dx: number, dy: number) => {
     setTileDataSource(state => {
       const newData = [...state];
 
@@ -356,9 +355,9 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
           });
 
           // Immediately UNMARK center tile — it will become special
-          newData[centerI][centerJ].markedAsMatch = false;
-          newData[centerI][centerJ].imgObj = ROCKET_OBJ;
-          newData[centerI][centerJ].direction = {
+          newData[dx][dy].markedAsMatch = false;
+          newData[dx][dy].imgObj = ROCKET_OBJ;
+          newData[dx][dy].direction = {
             dx,
             dy,
             direction: dir.direction || 'horizontal',
@@ -383,9 +382,9 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
           });
 
           // Immediately UNMARK center tile — it will become special
-          newData[centerI][centerJ].markedAsMatch = false;
-          newData[centerI][centerJ].imgObj = ROCKET_OBJ;
-          newData[centerI][centerJ].direction = {
+          newData[dx][dy].markedAsMatch = false;
+          newData[dx][dy].imgObj = ROCKET_OBJ;
+          newData[dx][dy].direction = {
             dx,
             dy,
             direction: dir.direction || 'horizontal',
