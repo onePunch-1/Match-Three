@@ -325,8 +325,7 @@ const SwappableGrid = ({ setMoveCount, setScore }: Props) => {
           }
           return;
         }
-        invalidSwap = true;
-        swap(i, j, dx, dy);
+        setMoveCount(moveCount => (moveCount += 1));
         setIsAnimating(false);
       }
     });
